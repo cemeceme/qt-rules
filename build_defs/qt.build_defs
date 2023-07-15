@@ -1,0 +1,37 @@
+"""Rules to generate qt moc code.
+"""
+
+def qt_moc(name:str, hdrs:list=[], test_only:bool = False, visibility:list=None):
+  """Generates moc cpp code for qt headers.
+  Args:
+    name (str): Name of this rule.
+    hdrs (list): A list of headers to generate moc code for.
+  """
+
+  buildRules = []
+  #pre_build = _library_transitive_labels(_c, compiler_flags, pkg_config_libs, pkg_config_cflags) if (deps or includes or defines or _interfaces) else None
+
+  for hdr in hdrs:
+    suffix = hdr.replace(".h", "_moc.cpp").replace('/', '_').replace('.', '_').replace(':', '_').replace('|', '_')
+    mocName = f'_{name}#{suffix}'
+    moc_rule = build_rule(
+      name=mocName,
+      srcs=[hdr],
+      outs=[hdr.replace(".h", "_moc.cpp")],
+      cmd={"dbg": "$TOOLS_MOC $SRCS > $OUTS", "opt" : "$TOOLS_MOC $SRCS > $OUTS"}, # TODO Creates an (empty)output regardless of valid input.
+      building_description='Generating moc...',
+      tools={"moc": CONFIG.QT.MOC_TOOL},
+      labels=["cc:inc:" + CONFIG.QT.INCLUDE_PATH],
+      #pre_build=pre_build,
+      needs_transitive_deps=True,
+    )
+    # Add generated moc to sources
+    buildRules += [moc_rule]
+
+  return filegroup(
+    name=name,
+    srcs=buildRules,
+    test_only=test_only,
+    visibility=visibility,
+    output_is_complete=False
+  )

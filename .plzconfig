@@ -1,0 +1,27 @@
+
+[please]
+version = >=17.1.0
+
+[Plugin "cc"]
+Target = //plugins:cc
+
+DefaultOptCppflags = --std=c++17 -O3 -pipe -DNDEBUG -Wall -Werror -fmax-errors=5
+
+# DefaultDbgCppflags = -fmax-errors=5
+
+[PluginDefinition]
+name = qt
+
+[PluginConfig "moc_tool"]
+ConfigKey = qtMocTool
+DefaultValue = /usr/lib/qt6/libexec/moc
+Inherit = true
+Type = str
+Help = The path to the qt MOC generator tool.
+
+[PluginConfig "include_path"]
+ConfigKey = qtIncludePath
+DefaultValue = /usr/include/x86_64-linux-gnu/qt6
+Inherit = true
+Type = str
+Help = The path to the qt system headers.

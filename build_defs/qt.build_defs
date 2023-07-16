@@ -1,6 +1,20 @@
 """Rules to generate qt moc code.
 """
 
+subinclude("///cc//build_defs:cc")
+
+def _moc_rule_gen(name:str, hdr:str):
+    moc_rule = build_rule(
+      name=name,
+      srcs=[hdr],
+      outs=[hdr.replace(".h", "_moc.cpp")],
+      cmd={"dbg": "$TOOLS_MOC $SRCS > $OUTS", "opt" : "$TOOLS_MOC $SRCS > $OUTS"}, # TODO Creates an (empty)output regardless of input.
+      building_description='Generating moc...',
+      tools={"moc": CONFIG.QT.MOC_TOOL},
+      needs_transitive_deps=True,
+    )
+    return(moc_rule)
+
 def qt_moc(name:str, hdrs:list=[], test_only:bool = False, visibility:list=None):
   """Generates moc cpp code for qt headers.
   Args:
@@ -8,30 +22,44 @@ def qt_moc(name:str, hdrs:list=[], test_only:bool = False, visibility:list=None)
     hdrs (list): A list of headers to generate moc code for.
   """
 
-  buildRules = []
-  #pre_build = _library_transitive_labels(_c, compiler_flags, pkg_config_libs, pkg_config_cflags) if (deps or includes or defines or _interfaces) else None
-
+  moc_rules = []
   for hdr in hdrs:
     suffix = hdr.replace(".h", "_moc.cpp").replace('/', '_').replace('.', '_').replace(':', '_').replace('|', '_')
     mocName = f'_{name}#{suffix}'
-    moc_rule = build_rule(
-      name=mocName,
-      srcs=[hdr],
-      outs=[hdr.replace(".h", "_moc.cpp")],
-      cmd={"dbg": "$TOOLS_MOC $SRCS > $OUTS", "opt" : "$TOOLS_MOC $SRCS > $OUTS"}, # TODO Creates an (empty)output regardless of valid input.
-      building_description='Generating moc...',
-      tools={"moc": CONFIG.QT.MOC_TOOL},
-      labels=["cc:inc:" + CONFIG.QT.INCLUDE_PATH],
-      #pre_build=pre_build,
-      needs_transitive_deps=True,
-    )
-    # Add generated moc to sources
-    buildRules += [moc_rule]
+    moc_rules += _moc_rule_gen(mocName, hdr)
 
   return filegroup(
     name=name,
-    srcs=buildRules,
+    srcs=moc_rules,
     test_only=test_only,
     visibility=visibility,
     output_is_complete=False
   )
+
+def cc_qt_moc_library(name:str, mocHdrs:list=[], hdrs:list=[], deps:list=[], test_only = False, visibility:list=None):
+  """Generates a cpp library of moc files to use in other cc rules.
+  Args:
+    name (str): Name of this rule.
+    hdrs (list): A list of optional headers to use when compiling the generated moc code. These do not get moc generation.
+    mocHdrs (list): A list of headers to generate moc code for.
+    deps (list): Dependant rules.
+  """
+
+  # Generate moc files.
+  moc_rules = []
+  for hdr in mocHdrs:
+    suffix = hdr.replace(".h", "_moc.cpp").replace('/', '_').replace('.', '_').replace(':', '_').replace('|', '_')
+    mocName = f'_{name}#{suffix}'
+    moc_rules += [_moc_rule_gen(mocName, hdr)]
+
+  # Generate the library.
+  libRule = cc_library(
+   name=name,
+   srcs=moc_rules,
+   hdrs=hdrs + mocHdrs,
+   deps=deps,
+   labels=["cc:inc:" + CONFIG.QT.INCLUDE_PATH],
+   includes=["."], # Add an empty include, as otherwise cc:inc: labels dont get applied.
+   linker_flags=CONFIG.QT.LINKER_PATHS
+  )
+  return(libRule)

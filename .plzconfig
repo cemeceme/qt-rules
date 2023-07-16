@@ -25,3 +25,13 @@ DefaultValue = /usr/include/x86_64-linux-gnu/qt6
 Inherit = true
 Type = str
 Help = The path to the qt system headers.
+
+[PluginConfig "linker_paths"]
+ConfigKey = qtLinkerPaths
+Repeatable = true
+DefaultValue = /usr/lib/x86_64-linux-gnu/libQt6Gui.so
+DefaultValue = /usr/lib/x86_64-linux-gnu/libQt6Widgets.so
+DefaultValue = /usr/lib/x86_64-linux-gnu/libQt6Core.so
+Inherit = true
+Type = str
+Help = The path to the qt system objects to use when linking.

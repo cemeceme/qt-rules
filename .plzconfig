@@ -7,8 +7,6 @@ Target = //plugins:cc
 
 DefaultOptCppflags = --std=c++17 -O3 -pipe -DNDEBUG -Wall -Werror -fmax-errors=5
 
-# DefaultDbgCppflags = -fmax-errors=5
-
 [PluginDefinition]
 name = qt
 

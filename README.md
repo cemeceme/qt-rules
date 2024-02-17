@@ -18,14 +18,14 @@ If you're not using them already, also include the please `cc-rules` repo for th
 Make sure to either `preloadsubincludes` or `subinclude` the rules in the BUILD files where you need them.
 
 ## Plugin configuration
-To configure the plugin, aff the following fields to the `[Plugin "qt"]` section of your `.pleaseconfig` file.
+To configure the plugin, add the following fields to the `[Plugin "qt"]` section of your `.pleaseconfig` file.
 
 ### qtMocTool
 The tool to use for moc generation.
 Defaults to `/usr/lib/qt6/libexec/moc`.
 
 ### qtIncludePath
-The incude path to use for Qt.
+The include path to use for Qt.
 Defaults to `/usr/include/x86_64-linux-gnu/qt6`.
 
 ### qtLinkerPaths

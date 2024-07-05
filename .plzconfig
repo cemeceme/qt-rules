@@ -10,26 +10,40 @@ DefaultOptCppflags = --std=c++17 -O3 -pipe -DNDEBUG -Wall -Werror -fmax-errors=5
 [PluginDefinition]
 name = qt
 
+[PluginConfig "version"]
+ConfigKey = qtVersion
+DefaultValue = 6
+Inherit = true
+Type = str
+Help = The version of Qt to use.
+
 [PluginConfig "moc_tool"]
 ConfigKey = qtMocTool
-DefaultValue = /usr/lib/qt6/libexec/moc
+DefaultValue = /usr/lib64/qt6/libexec/moc
 Inherit = true
 Type = str
 Help = The path to the qt MOC generator tool.
 
 [PluginConfig "include_path"]
 ConfigKey = qtIncludePath
-DefaultValue = /usr/include/x86_64-linux-gnu/qt6
+DefaultValue = /usr/include/qt6
 Inherit = true
 Type = str
 Help = The path to the qt system headers.
 
-[PluginConfig "linker_paths"]
-ConfigKey = qtLinkerPaths
-Repeatable = true
-DefaultValue = /usr/lib/x86_64-linux-gnu/libQt6Gui.so
-DefaultValue = /usr/lib/x86_64-linux-gnu/libQt6Widgets.so
-DefaultValue = /usr/lib/x86_64-linux-gnu/libQt6Core.so
+[PluginConfig "so_root_path"]
+ConfigKey = qtSORootPath
+DefaultValue = /usr/lib64/
 Inherit = true
 Type = str
-Help = The path to the qt system objects to use when linking.
+Help = The path of the root directory where the qt system objects are located.
+
+
+[PluginConfig "components"]
+ConfigKey = qtComponents
+Repeatable = true
+DefaultValue = Core
+DefaultValue = Widgets
+Inherit = true
+Type = str
+Help = The Qt components to include.

@@ -44,7 +44,7 @@ def cc_qt_moc_library(name:str, mocHdrs:list=[], hdrs:list=[], deps:list=[], tes
     name (str): Name of this rule.
     mocHdrs (list): A list of headers to generate moc code for.
     hdrs (list): A list of optional headers to use when compiling the generated moc code. These do not get moc generation.
-    deps (list): Dependant rules.
+    deps (list): Dependent rules.
     test_only (bool): True if this rule should only be used for tests. Defaults to False.
     visibility (bool): list of rules that should have visibility to this rule. Defaults to None.
   """
@@ -64,6 +64,6 @@ def cc_qt_moc_library(name:str, mocHdrs:list=[], hdrs:list=[], deps:list=[], tes
    deps=deps,
    labels=["cc:inc:" + CONFIG.QT.INCLUDE_PATH],
    includes=["."], # Add an empty include, as otherwise cc:inc: labels dont get applied.
-   linker_flags=CONFIG.QT.LINKER_PATHS
+   linker_flags=[join_path(CONFIG.QT.SO_ROOT_PATH, "libQt" + CONFIG.QT.VERSION + x + ".so") for x in CONFIG.QT.COMPONENTS] # Add each module as a concatination of root path + "libQt" + qtVersion + module name + ".so"
   )
   return(libRule)

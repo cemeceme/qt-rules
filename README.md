@@ -20,23 +20,34 @@ Make sure to either `preloadsubincludes` or `subinclude` the rules in the BUILD 
 ## Plugin configuration
 To configure the plugin, add the following fields to the `[Plugin "qt"]` section of your `.pleaseconfig` file.
 
+### qtVersion
+The version of Qt to use.
+
+Defaults to `6`.
+Note that if the version number is changed, any version numbers in other config paths also need to be modified.
+
 ### qtMocTool
 The tool to use for moc generation.
-Defaults to `/usr/lib/qt6/libexec/moc`.
+
+Defaults to `/usr/lib64/qt6/libexec/moc`.
 
 ### qtIncludePath
 The include path to use for Qt.
-Defaults to `/usr/include/x86_64-linux-gnu/qt6`.
 
-### qtLinkerPaths
-A set of paths to use for linking to Qt.
-Multiple paths may be defined.
+Defaults to `/usr/include/qt6`.
+
+### qtSORootPath
+The root directory that contains the different Qt .so files.
+
+Defaults to `/usr/lib64/`
+
+### qtComponents
+A list of Qt components that should be loaded.
 
 Defaults to
 ```
-/usr/lib/x86_64-linux-gnu/libQt6Gui.so
-/usr/lib/x86_64-linux-gnu/libQt6Widgets.so
-/usr/lib/x86_64-linux-gnu/libQt6Core.so
+Core
+Widgets
 ```
 
 ## Provided rules
@@ -60,7 +71,10 @@ Takes the following arguments:
 name       (str) : Name of this rule.
 mocHdrs    (list): A list of headers to generate moc code for.
 hdrs       (list): A list of optional headers to use when compiling the generated moc code. These do not get moc generation.
-deps       (list): Dependant rules.
+deps       (list): Dependent rules.
 test_only  (bool): True if this rule should only be used for tests. Defaults to False.
 visibility (bool): list of rules that should have visibility to this rule. Defaults to None.
 ```
+
+#### TODO
+Currently, the default paths used by this plugin are set to those found on fedora with Qt6 installed through dnf. Eventually, the default paths should be set to empty strings, as to be overridable by the user. However, if not overriden, the plugin should use a tool like `pkg-config` to figure out the proper paths.

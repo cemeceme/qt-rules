@@ -64,6 +64,7 @@ def cc_qt_moc_library(name:str, mocHdrs:list=[], hdrs:list=[], deps:list=[], tes
    deps=deps,
    labels=["cc:inc:" + CONFIG.QT.INCLUDE_PATH],
    includes=["."], # Add an empty include, as otherwise cc:inc: labels dont get applied.
-   linker_flags=[join_path(CONFIG.QT.SO_ROOT_PATH, "libQt" + CONFIG.QT.VERSION + x + ".so") for x in CONFIG.QT.COMPONENTS] # Add each module as a concatination of root path + "libQt" + qtVersion + module name + ".so"
+   linker_flags=[join_path(CONFIG.QT.SO_ROOT_PATH, "libQt" + CONFIG.QT.VERSION + x + ".so") for x in CONFIG.QT.COMPONENTS], # Add each module as a concatination of root path + "libQt" + qtVersion + module name + ".so"
+   visibility = visibility
   )
   return(libRule)

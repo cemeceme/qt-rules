@@ -60,7 +60,7 @@ Takes the following arguments:
 name       (str):  Name of this rule.
 hdrs       (list): A list of headers to generate moc code for.
 test_only  (bool): True if this rule should only be used for tests. Defaults to False.
-visibility (bool): list of rules that should have visibility to this rule. Defaults to None.
+visibility (list): list of rules that should have visibility to this rule. Defaults to None.
 ```
 
 ### cc_qt_moc_library
@@ -73,7 +73,7 @@ mocHdrs    (list): A list of headers to generate moc code for.
 hdrs       (list): A list of optional headers to use when compiling the generated moc code. These do not get moc generation.
 deps       (list): Dependent rules.
 test_only  (bool): True if this rule should only be used for tests. Defaults to False.
-visibility (bool): list of rules that should have visibility to this rule. Defaults to None.
+visibility (list): list of rules that should have visibility to this rule. Defaults to None.
 ```
 
 #### TODO

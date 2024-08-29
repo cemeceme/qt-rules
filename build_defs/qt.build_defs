@@ -116,6 +116,7 @@ def qt_translation_bin(name:str, srcs:list=[], id_based:bool=False, compress:boo
       cmd = cmd,
       tools={"lrelease": CONFIG.QT.LRELEASE},
       building_description='Compiling translation...',
+      binary = True
     )
     translations += [translateRule]
     
@@ -124,6 +125,7 @@ def qt_translation_bin(name:str, srcs:list=[], id_based:bool=False, compress:boo
     name = name,
     srcs = translations,
     test_only = test_only,
+    binary = True,
     visibility = visibility
   )
 

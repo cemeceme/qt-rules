@@ -24,6 +24,13 @@ Inherit = true
 Type = str
 Help = The path to the qt MOC generator tool.
 
+[PluginConfig "lrelease"]
+ConfigKey = qtLRelease
+DefaultValue = /usr/bin/lrelease-qt6
+Inherit = true
+Type = str
+Help = The path to the qt LRelease compiler tool.
+
 [PluginConfig "include_path"]
 ConfigKey = qtIncludePath
 DefaultValue = /usr/include/qt6

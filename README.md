@@ -31,6 +31,11 @@ The tool to use for moc generation.
 
 Defaults to `/usr/lib64/qt6/libexec/moc`.
 
+### qtLRelease
+The tool to use for translation binary generation.
+
+Defaults to `/usr/bin/lrelease-qt6`.
+
 ### qtIncludePath
 The include path to use for Qt.
 
@@ -74,6 +79,22 @@ hdrs       (list): A list of optional headers to use when compiling the generate
 deps       (list): Dependent rules.
 test_only  (bool): True if this rule should only be used for tests. Defaults to False.
 visibility (list): list of rules that should have visibility to this rule. Defaults to None.
+```
+
+### qt_translation_bin
+Compiles qt `.ts` files into `.qm` files for translations.
+
+Takes the following arguments:
+```
+name              (str): Name of this rule.
+srcs              (list): A list of sources to generate binaries for.
+id_based          (bool): Use IDs instead of source strings for message keying. Defaults to False.
+compress          (bool): Compress the QM files. Defaults to True.
+no_unfinished     (bool):  Do not include unfinished translations. Defaults to False.
+remove_identical  (bool): If the translated text is the same as the source text, do not include the message. Defaults to False.
+mark_untranslated (str|None): If a message has no real translation, use the source text prefixed with the given string instead. Defaults to None.
+test_only         (bool): True if this rule should only be used for tests. Defaults to False.
+visibility        (list): list of rules that should have visibility to this rule. Defaults to None.
 ```
 
 #### TODO

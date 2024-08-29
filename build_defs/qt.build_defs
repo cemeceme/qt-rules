@@ -65,6 +65,66 @@ def cc_qt_moc_library(name:str, mocHdrs:list=[], hdrs:list=[], deps:list=[], tes
    labels=["cc:inc:" + CONFIG.QT.INCLUDE_PATH],
    includes=["."], # Add an empty include, as otherwise cc:inc: labels dont get applied.
    linker_flags=[join_path(CONFIG.QT.SO_ROOT_PATH, "libQt" + CONFIG.QT.VERSION + x + ".so") for x in CONFIG.QT.COMPONENTS], # Add each module as a concatination of root path + "libQt" + qtVersion + module name + ".so"
+    test_only=test_only,
    visibility = visibility
   )
   return(libRule)
+
+
+# def qt_gen_translation(name:str, srcs:list=[], test_only:bool=False, visibility:list=None):
+
+def qt_translation_bin(name:str, srcs:list=[], id_based:bool=False, compress:bool=True, no_unfinished:bool = False, remove_identical:bool = False, mark_untranslated:str = None, test_only:bool=False, visibility:list=None):
+  """Generates a qt translation binary.
+  Args:
+    name (str): Name of this rule.
+    srcs (list): A list of sources to generate binaries for.
+    id_based (bool): Use IDs instead of source strings for message keying. Defaults to False.
+    compress (bool): Compress the QM files. Defaults to True.
+    no_unfinished (bool):  Do not include unfinished translations. Defaults to False.
+    remove_identical (bool): If the translated text is the same as the source text, do not include the message. Defaults to False.
+    mark_untranslated (str|None): If a message has no real translation, use the source text prefixed with the given string instead. Defaults to None.
+    test_only (bool): True if this rule should only be used for tests. Defaults to False.
+    visibility (list): list of rules that should have visibility to this rule. Defaults to None.
+  """
+
+  translations = []
+
+  # Build the command to run.
+  cmd = "$TOOLS_LRELEASE "
+  if(id_based):
+    cmd += "-idbased "
+  if(compress):
+    cmd += "-compress "
+  if(no_unfinished):
+    cmd += "-nounfinished "
+  if(remove_identical):
+    cmd += "-removeidentical "
+  if(mark_untranslated):
+    cmd += "-markuntranslated " + mark_untranslated + " "
+  
+  # Add input and output parameters
+  cmd += "${SRC} "
+  cmd += "-qm ${OUT}"
+
+  for src in srcs:
+    # Build each source in its own rule.
+    suffix = src.replace(".ts", ".qm").replace('/', '_').replace('.', '_').replace(':', '_').replace('|', '_')
+    translateRule = build_rule(
+      name = f'_{name}#{suffix}',
+      srcs = [src],
+      outs=[src.replace(".ts", ".qm")],
+      cmd = cmd,
+      tools={"lrelease": CONFIG.QT.LRELEASE},
+      building_description='Compiling translation...',
+    )
+    translations += [translateRule]
+    
+  # Combine all outputs into one rule.
+  translationGroupRule = filegroup(
+    name = name,
+    srcs = translations,
+    test_only = test_only,
+    visibility = visibility
+  )
+
+  return(translationGroupRule)

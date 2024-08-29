@@ -27,3 +27,8 @@ cc_binary(
  hdrs=glob("*.h"),
  deps=[":QT_test_moc_library"]
 )
+
+qt_translation_bin(
+ name="QT_test_translations",
+ srcs=glob("*.ts")
+)

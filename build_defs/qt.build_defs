@@ -4,129 +4,124 @@
 subinclude("///cc//build_defs:cc")
 
 def _moc_rule_gen(name:str, hdr:str):
-    moc_rule = build_rule(
-      name=name,
-      srcs=[hdr],
-      outs=[hdr.replace(".h", "_moc.cpp")],
-      cmd={"dbg": "$TOOLS_MOC $SRCS > $OUTS", "opt" : "$TOOLS_MOC $SRCS > $OUTS"}, # TODO Creates an (empty)output regardless of input.
-      building_description='Generating moc...',
-      tools={"moc": CONFIG.QT.MOC_TOOL},
-      needs_transitive_deps=True,
-    )
-    return(moc_rule)
+        moc_rule = build_rule(
+            name=name,
+            srcs=[hdr],
+            outs=[hdr.replace(".h", "_moc.cpp")],
+            cmd={"dbg": "$TOOLS_MOC $SRCS > $OUTS", "opt" : "$TOOLS_MOC $SRCS > $OUTS"}, # TODO Creates an (empty)output regardless of input.
+            building_description='Generating moc...',
+            tools={"moc": CONFIG.QT.MOC_TOOL},
+            needs_transitive_deps=True,
+        )
+        return(moc_rule)
 
 def qt_moc(name:str, hdrs:list=[], test_only:bool = False, visibility:list=None):
-  """Generates moc cpp code for qt headers.
-  Args:
-    name (str): Name of this rule.
-    hdrs (list): A list of headers to generate moc code for.
-    test_only (bool): True if this rule should only be used for tests. Defaults to False.
-    visibility (bool): list of rules that should have visibility to this rule. Defaults to None.
-  """
+    """Generates moc cpp code for qt headers.
+    Args:
+        name (str): Name of this rule.
+        hdrs (list): A list of headers to generate moc code for.
+        test_only (bool): True if this rule should only be used for tests. Defaults to False.
+        visibility (bool): list of rules that should have visibility to this rule. Defaults to None.
+    """
 
-  moc_rules = []
-  for hdr in hdrs:
-    suffix = hdr.replace(".h", "_moc.cpp").replace('/', '_').replace('.', '_').replace(':', '_').replace('|', '_')
-    mocName = f'_{name}#{suffix}'
-    moc_rules += _moc_rule_gen(mocName, hdr)
+    moc_rules = []
+    for hdr in hdrs:
+        suffix = hdr.replace(".h", "_moc.cpp").replace('/', '_').replace('.', '_').replace(':', '_').replace('|', '_')
+        moc_rules += [_moc_rule_gen(tag(name, suffix), hdr)]
 
-  return filegroup(
-    name=name,
-    srcs=moc_rules,
-    test_only=test_only,
-    visibility=visibility,
-    output_is_complete=False
-  )
+    return filegroup(
+        name=name,
+        srcs=moc_rules,
+        test_only=test_only,
+        visibility=visibility,
+        output_is_complete=False
+    )
 
 def cc_qt_moc_library(name:str, mocHdrs:list=[], hdrs:list=[], deps:list=[], test_only = False, visibility:list=None):
-  """Generates a cpp library of moc files to use in other cc rules.
-  Args:
-    name (str): Name of this rule.
-    mocHdrs (list): A list of headers to generate moc code for.
-    hdrs (list): A list of optional headers to use when compiling the generated moc code. These do not get moc generation.
-    deps (list): Dependent rules.
-    test_only (bool): True if this rule should only be used for tests. Defaults to False.
-    visibility (bool): list of rules that should have visibility to this rule. Defaults to None.
-  """
+    """Generates a cpp library of moc files to use in other cc rules.
+    Args:
+        name (str): Name of this rule.
+        mocHdrs (list): A list of headers to generate moc code for.
+        hdrs (list): A list of optional headers to use when compiling the generated moc code. These do not get moc generation.
+        deps (list): Dependent rules.
+        test_only (bool): True if this rule should only be used for tests. Defaults to False.
+        visibility (bool): list of rules that should have visibility to this rule. Defaults to None.
+    """
 
-  # Generate moc files.
-  moc_rules = []
-  for hdr in mocHdrs:
-    suffix = hdr.replace(".h", "_moc.cpp").replace('/', '_').replace('.', '_').replace(':', '_').replace('|', '_')
-    mocName = f'_{name}#{suffix}'
-    moc_rules += [_moc_rule_gen(mocName, hdr)]
+    # Generate moc Rule.
+    mocRule = qt_moc(tag(name, "moc"), mocHdrs)
 
-  # Generate the library.
-  libRule = cc_library(
-   name=name,
-   srcs=moc_rules,
-   hdrs=hdrs + mocHdrs,
-   deps=deps,
-   labels=["cc:inc:" + CONFIG.QT.INCLUDE_PATH],
-   includes=["."], # Add an empty include, as otherwise cc:inc: labels dont get applied.
-   linker_flags=[join_path(CONFIG.QT.SO_ROOT_PATH, "libQt" + CONFIG.QT.VERSION + x + ".so") for x in CONFIG.QT.COMPONENTS], # Add each module as a concatination of root path + "libQt" + qtVersion + module name + ".so"
-    test_only=test_only,
-   visibility = visibility
-  )
-  return(libRule)
+    # Generate the library.
+    libRule = cc_library(
+        name=name,
+        srcs=[mocRule],
+        hdrs=hdrs + mocHdrs,
+        deps=deps,
+        labels=["cc:inc:" + CONFIG.QT.INCLUDE_PATH],
+        includes=["."], # Add an empty include, as otherwise cc:inc: labels dont get applied.
+        linker_flags=[join_path(CONFIG.QT.SO_ROOT_PATH, "libQt" + CONFIG.QT.VERSION + x + ".so") for x in CONFIG.QT.COMPONENTS], # Add each module as a concatination of root path + "libQt" + qtVersion + module name + ".so"
+        test_only=test_only,
+        visibility = visibility
+    )
+    return(libRule)
 
 
 # def qt_gen_translation(name:str, srcs:list=[], test_only:bool=False, visibility:list=None):
 
 def qt_translation_bin(name:str, srcs:list=[], id_based:bool=False, compress:bool=True, no_unfinished:bool = False, remove_identical:bool = False, mark_untranslated:str = None, test_only:bool=False, visibility:list=None):
-  """Generates a qt translation binary.
-  Args:
-    name (str): Name of this rule.
-    srcs (list): A list of sources to generate binaries for.
-    id_based (bool): Use IDs instead of source strings for message keying. Defaults to False.
-    compress (bool): Compress the QM files. Defaults to True.
-    no_unfinished (bool):  Do not include unfinished translations. Defaults to False.
-    remove_identical (bool): If the translated text is the same as the source text, do not include the message. Defaults to False.
-    mark_untranslated (str|None): If a message has no real translation, use the source text prefixed with the given string instead. Defaults to None.
-    test_only (bool): True if this rule should only be used for tests. Defaults to False.
-    visibility (list): list of rules that should have visibility to this rule. Defaults to None.
-  """
+    """Generates a qt translation binary.
+    Args:
+        name (str): Name of this rule.
+        srcs (list): A list of sources to generate binaries for.
+        id_based (bool): Use IDs instead of source strings for message keying. Defaults to False.
+        compress (bool): Compress the QM files. Defaults to True.
+        no_unfinished (bool):    Do not include unfinished translations. Defaults to False.
+        remove_identical (bool): If the translated text is the same as the source text, do not include the message. Defaults to False.
+        mark_untranslated (str|None): If a message has no real translation, use the source text prefixed with the given string instead. Defaults to None.
+        test_only (bool): True if this rule should only be used for tests. Defaults to False.
+        visibility (list): list of rules that should have visibility to this rule. Defaults to None.
+    """
 
-  translations = []
+    translations = []
 
-  # Build the command to run.
-  cmd = "$TOOLS_LRELEASE "
-  if(id_based):
-    cmd += "-idbased "
-  if(compress):
-    cmd += "-compress "
-  if(no_unfinished):
-    cmd += "-nounfinished "
-  if(remove_identical):
-    cmd += "-removeidentical "
-  if(mark_untranslated):
-    cmd += "-markuntranslated " + mark_untranslated + " "
-  
-  # Add input and output parameters
-  cmd += "${SRC} "
-  cmd += "-qm ${OUT}"
-
-  for src in srcs:
-    # Build each source in its own rule.
-    suffix = src.replace(".ts", ".qm").replace('/', '_').replace('.', '_').replace(':', '_').replace('|', '_')
-    translateRule = build_rule(
-      name = f'_{name}#{suffix}',
-      srcs = [src],
-      outs=[src.replace(".ts", ".qm")],
-      cmd = cmd,
-      tools={"lrelease": CONFIG.QT.LRELEASE},
-      building_description='Compiling translation...',
-      binary = True
-    )
-    translations += [translateRule]
+    # Build the command to run.
+    cmd = "$TOOLS_LRELEASE "
+    if(id_based):
+        cmd += "-idbased "
+    if(compress):
+        cmd += "-compress "
+    if(no_unfinished):
+        cmd += "-nounfinished "
+    if(remove_identical):
+        cmd += "-removeidentical "
+    if(mark_untranslated):
+        cmd += "-markuntranslated " + mark_untranslated + " "
     
-  # Combine all outputs into one rule.
-  translationGroupRule = filegroup(
-    name = name,
-    srcs = translations,
-    test_only = test_only,
-    binary = True,
-    visibility = visibility
-  )
+    # Add input and output parameters
+    cmd += "${SRC} "
+    cmd += "-qm ${OUT}"
 
-  return(translationGroupRule)
+    for src in srcs:
+        # Build each source in its own rule.
+        suffix = src.replace(".ts", ".qm").replace('/', '_').replace('.', '_').replace(':', '_').replace('|', '_')
+        translateRule = build_rule(
+            name = f'_{name}#{suffix}',
+            srcs = [src],
+            outs=[src.replace(".ts", ".qm")],
+            cmd = cmd,
+            tools={"lrelease": CONFIG.QT.LRELEASE},
+            building_description='Compiling translation...',
+            binary = True
+        )
+        translations += [translateRule]
+        
+    # Combine all outputs into one rule.
+    translationGroupRule = filegroup(
+        name = name,
+        srcs = translations,
+        test_only = test_only,
+        binary = True,
+        visibility = visibility
+    )
+
+    return(translationGroupRule)

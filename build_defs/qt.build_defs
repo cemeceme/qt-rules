@@ -3,17 +3,21 @@
 
 subinclude("///cc//build_defs:cc")
 
-def _moc_rule_gen(name:str, hdr:str):
-        moc_rule = build_rule(
-            name=name,
+def _moc_rules_gen(name:str, hdrs:list)->list:
+    res = []
+    for hdr in hdrs:
+        suffix = hdr.replace(".h", "_moc.cpp").replace('/', '_').replace('.', '_').replace(':', '_').replace('|', '_')
+        mocRule = build_rule(
+            name=tag(name, suffix),
             srcs=[hdr],
             outs=[hdr.replace(".h", "_moc.cpp")],
-            cmd={"dbg": "$TOOLS_MOC $SRCS > $OUTS", "opt" : "$TOOLS_MOC $SRCS > $OUTS"}, # TODO Creates an (empty)output regardless of input.
+            cmd={"dbg": "$TOOLS_MOC -o $OUTS $SRCS", "opt" : "$TOOLS_MOC -o $OUTS $SRCS"}, # TODO Creates an (potentially empty)output regardless of input.
             building_description='Generating moc...',
             tools={"moc": CONFIG.QT.MOC_TOOL},
             needs_transitive_deps=True,
         )
-        return(moc_rule)
+        res += [mocRule]
+    return(res)
 
 def qt_moc(name:str, hdrs:list=[], test_only:bool = False, visibility:list=None):
     """Generates moc cpp code for qt headers.
@@ -24,14 +28,13 @@ def qt_moc(name:str, hdrs:list=[], test_only:bool = False, visibility:list=None)
         visibility (bool): list of rules that should have visibility to this rule. Defaults to None.
     """
 
-    moc_rules = []
-    for hdr in hdrs:
-        suffix = hdr.replace(".h", "_moc.cpp").replace('/', '_').replace('.', '_').replace(':', '_').replace('|', '_')
-        moc_rules += [_moc_rule_gen(tag(name, suffix), hdr)]
+    # Generate the moc rules.
+    mocRules = _moc_rules_gen(name=tag(name, "moc"), hdrs=hdrs)
 
+    # Return results in a filegroup.
     return filegroup(
         name=name,
-        srcs=moc_rules,
+        srcs=mocRules,
         test_only=test_only,
         visibility=visibility,
         output_is_complete=False
@@ -47,19 +50,18 @@ def cc_qt_moc_library(name:str, mocHdrs:list=[], hdrs:list=[], deps:list=[], tes
         test_only (bool): True if this rule should only be used for tests. Defaults to False.
         visibility (bool): list of rules that should have visibility to this rule. Defaults to None.
     """
-
-    # Generate moc Rule.
-    mocRule = qt_moc(tag(name, "moc"), mocHdrs)
+    # Generate the moc rules.
+    mocRules = _moc_rules_gen(name=tag(name, "moc"), hdrs=mocHdrs)
 
     # Generate the library.
     libRule = cc_library(
         name=name,
-        srcs=[mocRule],
+        srcs=mocRules,
         hdrs=hdrs + mocHdrs,
         deps=deps,
         labels=["cc:inc:" + CONFIG.QT.INCLUDE_PATH],
         includes=["."], # Add an empty include, as otherwise cc:inc: labels dont get applied.
-        linker_flags=[join_path(CONFIG.QT.SO_ROOT_PATH, "libQt" + CONFIG.QT.VERSION + x + ".so") for x in CONFIG.QT.COMPONENTS], # Add each module as a concatination of root path + "libQt" + qtVersion + module name + ".so"
+        linker_flags=[join_path(CONFIG.QT.SO_ROOT_PATH, "libQt" + CONFIG.QT.VERSION + x + ".so") for x in CONFIG.QT.COMPONENTS], # Add each module as a concatenation of root path + "libQt" + qtVersion + module name + ".so"
         test_only=test_only,
         visibility = visibility
     )
@@ -105,7 +107,7 @@ def qt_translation_bin(name:str, srcs:list=[], id_based:bool=False, compress:boo
         # Build each source in its own rule.
         suffix = src.replace(".ts", ".qm").replace('/', '_').replace('.', '_').replace(':', '_').replace('|', '_')
         translateRule = build_rule(
-            name = f'_{name}#{suffix}',
+            name = tag(name, suffix),
             srcs = [src],
             outs=[src.replace(".ts", ".qm")],
             cmd = cmd,

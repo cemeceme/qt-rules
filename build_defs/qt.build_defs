@@ -3,19 +3,29 @@
 
 subinclude("///cc//build_defs:cc")
 
+def _moc_rule_gen(name:str, hdr:str):
+    """
+    Generates a moc rule for a single header.
+    """
+    mocRule = build_rule(
+        name=name,
+        srcs=[hdr],
+        outs=[hdr.replace(".h", "_moc.cpp")],
+        cmd={"dbg": "$TOOLS_MOC -o $OUTS $SRCS", "opt" : "$TOOLS_MOC -o $OUTS $SRCS"}, # TODO Creates an (potentially empty)output regardless of input.
+        building_description='Generating moc...',
+        tools={"moc": CONFIG.QT.MOC_TOOL},
+        needs_transitive_deps=True,
+    )
+    return(mocRule)
+
 def _moc_rules_gen(name:str, hdrs:list)->list:
+    """
+    Generates moc rules for a list of headers.
+    """
     res = []
     for hdr in hdrs:
-        suffix = hdr.replace(".h", "_moc.cpp").replace('/', '_').replace('.', '_').replace(':', '_').replace('|', '_')
-        mocRule = build_rule(
-            name=tag(name, suffix),
-            srcs=[hdr],
-            outs=[hdr.replace(".h", "_moc.cpp")],
-            cmd={"dbg": "$TOOLS_MOC -o $OUTS $SRCS", "opt" : "$TOOLS_MOC -o $OUTS $SRCS"}, # TODO Creates an (potentially empty)output regardless of input.
-            building_description='Generating moc...',
-            tools={"moc": CONFIG.QT.MOC_TOOL},
-            needs_transitive_deps=True,
-        )
+        suffix = hdr.replace(".h", "_moc").replace('/', '_').replace('.', '_').replace(':', '_').replace('|', '_')
+        mocRule = _moc_rule_gen(name=tag(name, suffix), hdr=hdr)
         res += [mocRule]
     return(res)
 
@@ -52,6 +62,7 @@ def cc_qt_moc_library(name:str, mocHdrs:list=[], hdrs:list=[], deps:list=[], tes
     """
     # Generate the moc rules.
     mocRules = _moc_rules_gen(name=tag(name, "moc"), hdrs=mocHdrs)
+    
 
     # Generate the library.
     libRule = cc_library(

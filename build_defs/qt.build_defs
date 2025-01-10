@@ -11,7 +11,7 @@ def _moc_rule_gen(name:str, hdr:str):
         name=name,
         srcs=[hdr],
         outs=[hdr.replace(".h", "_moc.cpp")],
-        cmd={"dbg": "$TOOLS_MOC -o $OUTS $SRCS", "opt" : "$TOOLS_MOC -o $OUTS $SRCS"}, # TODO Creates an (potentially empty)output regardless of input.
+        cmd="$TOOLS_MOC $SRC > $OUT", # TODO Creates an (potentially empty)output regardless of input.
         building_description='Generating moc...',
         tools={"moc": CONFIG.QT.MOC_TOOL},
         needs_transitive_deps=True,

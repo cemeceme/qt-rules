@@ -38,13 +38,19 @@ Inherit = true
 Type = str
 Help = The path to the qt system headers.
 
-[PluginConfig "so_root_path"]
-ConfigKey = qtSORootPath
+[PluginConfig "library_root_path"]
+ConfigKey = qtLibRootPath
 DefaultValue = /usr/lib64/
 Inherit = true
 Type = str
 Help = The path of the root directory where the qt system objects are located.
 
+[PluginConfig "library_extension"]
+ConfigKey = qtLibExtension
+DefaultValue = .so
+Inherit = true
+Type = str
+Help = The extension to use for qt library files.
 
 [PluginConfig "components"]
 ConfigKey = qtComponents

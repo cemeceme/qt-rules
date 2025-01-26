@@ -41,10 +41,15 @@ The include path to use for Qt.
 
 Defaults to `/usr/include/qt6`.
 
-### qtSORootPath
-The root directory that contains the different Qt .so files.
+### qtLibRootPath
+The root directory that contains the different Qt library (.so) files.
 
 Defaults to `/usr/lib64/`
+
+### qtLibExtension
+The extension to use for the Qt libraries. useful for compiling for different platforms.
+
+Defaults to `.so`
 
 ### qtComponents
 A list of Qt components that should be loaded.
